@@ -1,31 +1,48 @@
 export const GET_PRODUCTS_QUERY = `
-  query GetProducts($first: Int) {
-    products(first: $first) {
-      nodes {
-        id
-        title
-        featuredImage {
-          url
-          altText
-        }
-        priceRangeV2 {
-          minVariantPrice {
-            amount
-            currencyCode
+  query GetProducts($first: Int, $after: String, $last: Int, $before: String) {
+    products(first: $first, after: $after, last: $last, before: $before) {
+      edges {
+        cursor
+        node {
+          id
+          title
+          featuredImage {
+            url
+            altText
           }
-          maxVariantPrice {
-            amount
-            currencyCode
+          priceRangeV2 {
+            minVariantPrice {
+              amount
+              currencyCode
+            }
+            maxVariantPrice {
+              amount
+              currencyCode
+            }
           }
+          tags
+          status
+          createdAt
+          updatedAt
+          handle
+          productType
+          vendor
         }
-        tags
-        status
-        createdAt
-        updatedAt
-        handle
-        productType
-        vendor
       }
+      pageInfo {
+        hasNextPage
+        hasPreviousPage
+        startCursor
+        endCursor
+      }
+    }
+  }
+`;
+
+export const GET_PRODUCTS_COUNT_QUERY = `
+  query GetProductsCount {
+    productsCount {
+      count
     }
   }
 `;
