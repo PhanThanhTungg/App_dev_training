@@ -49,6 +49,11 @@ const EditProduct = ({
     setTags((oldTags) => oldTags.filter((t) => t !== tag));
   };
 
+  const handleUpdateProduct = ()=>{
+    shopify.toast.show("Product updated", { duration: 2000 });
+    handleClose();
+  }
+
   return (
     <div style={{ height: "0px" }}>
       <Frame>
@@ -58,7 +63,7 @@ const EditProduct = ({
           title="Edit Product"
           primaryAction={{
             content: "Save",
-            onAction: handleClose,
+            onAction: handleUpdateProduct,
           }}
           secondaryActions={[
             {
