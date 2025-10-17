@@ -5,6 +5,7 @@ import { getProducts, getProductsCount } from "../../models/product.server";
 import ProductTable from "../../components/ProductTable";
 import EmptyState from "../../components/EmptyState";
 import { useCallback } from "react";
+import { UPDATE_PRODUCT_TAGS_MUTATION } from "../../graphqlActions/product.grapql";
 
 export async function loader({ request }) {
   const { admin } = await authenticate.admin(request);
@@ -25,6 +26,41 @@ export async function loader({ request }) {
     totalCount,
     totalPages: Math.ceil(totalCount / limit),
   };
+}
+
+export async function action({ request }) {
+  const { admin } = await authenticate.admin(request);
+  const formData = await request.formData();
+  
+  const productId = formData.get("productId");
+  const tags = JSON.parse(formData.get("tags"));
+  try {
+    const response = await admin.graphql(UPDATE_PRODUCT_TAGS_MUTATION, {
+      variables: {
+        id: productId,
+        tags: tags,
+      },
+    });
+
+    const data = await response.json();
+
+    if (data.data.productUpdate.userErrors.length > 0) {
+      return {
+        success: false,
+        errors: data.data.productUpdate.userErrors,
+      };
+    }
+
+    return {
+      success: true,
+      product: data.data.productUpdate.product,
+    };
+  } catch (error) {
+    return {
+      success: false,
+      error: error.message,
+    };
+  }
 }
 
 export default function Products() {

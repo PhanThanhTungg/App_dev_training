@@ -16,6 +16,7 @@ import {
 import { useCallback, useRef, useState } from "react";
 import { ImageIcon, PlusCircleIcon, XIcon } from "@shopify/polaris-icons";
 import { formatPrice, formatDate } from "../utils/format.util";
+import { useFetcher } from "react-router";
 
 const EditProduct = ({
   editModalState,
@@ -24,7 +25,9 @@ const EditProduct = ({
 }) => {
   const [tags, setTags] = useState(selectedProductEdit.tags);
   const [addTagModal, setAddTagModal] = useState(false);
+  const [isUpdating, setIsUpdating] = useState(false);
 
+  const fetcher = useFetcher();
   const newTagRef = useRef(null);
 
   const handleAddTagModal = () => {
@@ -49,10 +52,25 @@ const EditProduct = ({
     setTags((oldTags) => oldTags.filter((t) => t !== tag));
   };
 
-  const handleUpdateProduct = ()=>{
-    shopify.toast.show("Product updated", { duration: 2000 });
-    handleClose();
-  }
+  const handleUpdateProduct = async () => {
+    try {
+      setIsUpdating(true);
+
+      fetcher.submit(
+        {
+          productId: selectedProductEdit.id,
+          tags: JSON.stringify(tags),
+        },
+        { method: "post" },
+      );
+
+      shopify.toast.show("Product updated", { duration: 2000 });
+      setIsUpdating(false);
+      handleClose();
+    } catch (error) {
+      shopify.toast.show("Failed to update product", { duration: 2000 });
+    }
+  };
 
   return (
     <div style={{ height: "0px" }}>
@@ -64,6 +82,7 @@ const EditProduct = ({
           primaryAction={{
             content: "Save",
             onAction: handleUpdateProduct,
+            loading: isUpdating,
           }}
           secondaryActions={[
             {

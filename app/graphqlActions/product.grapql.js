@@ -46,3 +46,18 @@ export const GET_PRODUCTS_COUNT_QUERY = `
     }
   }
 `;
+
+export const UPDATE_PRODUCT_TAGS_MUTATION = `
+  mutation UpdateProductTags($id: ID!, $tags: [String!]!) {
+    productUpdate(input: { id: $id, tags: $tags }) {
+      product {
+        id
+        tags
+      }
+      userErrors {
+        field
+        message
+      }
+    }
+  }
+`;
