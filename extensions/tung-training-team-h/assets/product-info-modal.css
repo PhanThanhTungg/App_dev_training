@@ -1,0 +1,201 @@
+.product-info-button {
+  padding: 12px 24px;
+  margin: 10px 5px;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 16px;
+  font-weight: 500;
+  transition: all 0.3s ease;
+  background: black;
+}
+
+.product-info-button:hover {
+  opacity: 0.8;
+}
+
+.product-info-error {
+  padding: 20px;
+  background-color: #fff3cd;
+  border: 1px solid #ffc107;
+  border-radius: 4px;
+  color: #856404;
+  text-align: center;
+  font-size: 14px;
+}
+
+.product-info-error strong {
+  display: block;
+  margin-bottom: 5px;
+  font-size: 16px;
+}
+
+.product-info-overlay {
+  display: none;
+  position: fixed !important;
+  top: 0 !important;
+  left: 0 !important;
+  right: 0 !important;
+  bottom: 0 !important;
+  width: 100vw !important;
+  height: 100vh !important;
+  background-color: rgba(0, 0, 0, 0.6) !important;
+  z-index: 2147483646 !important;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  pointer-events: auto !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  border: none !important;
+  transform: none !important;
+}
+
+.product-info-overlay.active {
+  opacity: 1;
+}
+
+.product-info-modal {
+  display: none;
+  position: fixed !important;
+  top: 50% !important;
+  left: 50% !important;
+  transform: translate(-50%, -50%) scale(0.7) !important;
+  width: 90% !important;
+  max-width: 600px !important;
+  max-height: 80vh !important;
+  overflow-y: auto !important;
+  padding: 30px !important;
+  border-radius: 12px !important;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5) !important;
+  z-index: 2147483647 !important;
+  opacity: 0;
+  transition: all 0.3s ease;
+  pointer-events: auto !important;
+  margin: 0 !important;
+  isolation: isolate !important;
+  contain: layout style paint !important;
+  will-change: transform, opacity !important;
+}
+
+.product-info-modal.active {
+  opacity: 1;
+  transform: translate(-50%, -50%) scale(1) !important;
+}
+
+.product-info-modal .close-modal {
+  position: absolute !important;
+  top: 15px !important;
+  right: 15px !important;
+  background: #f0f0f0 !important;
+  border: none !important;
+  font-size: 28px !important;
+  cursor: pointer !important;
+  color: #333 !important;
+  width: 36px !important;
+  height: 36px !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  border-radius: 50% !important;
+  transition: all 0.2s ease;
+  z-index: 2147483647 !important;
+  line-height: 1 !important;
+  pointer-events: auto !important;
+}
+
+.product-info-modal .close-modal:hover {
+  background-color: #e0e0e0;
+  color: #000;
+  transform: scale(1.1);
+}
+
+.product-info-modal h3 {
+  margin-top: 0;
+  margin-bottom: 20px;
+  color: #333;
+  font-size: 24px;
+  padding-right: 30px;
+}
+
+.product-info-details {
+  line-height: 1.8;
+}
+
+.product-info-details p {
+  margin-bottom: 12px;
+}
+
+.product-info-details .product-price {
+  font-size: 18px;
+  color: #0066cc;
+}
+
+.product-info-details .compare-price {
+  text-decoration: line-through;
+  color: #999;
+}
+
+.product-info-details .discount-badge {
+  color: #ff4444;
+  margin-left: 8px;
+  font-weight: 500;
+}
+
+.product-info-details .in-stock {
+  color: #00aa00;
+  font-weight: 500;
+}
+
+.product-info-details .out-of-stock {
+  color: #ff4444;
+  font-weight: 500;
+}
+
+.product-info-details .tags {
+  color: #666;
+}
+
+.product-info-details .description-section {
+  margin-top: 20px;
+  padding-top: 20px;
+  border-top: 1px solid #e0e0e0;
+}
+
+.product-info-details .description-section strong {
+  display: block;
+  margin-bottom: 10px;
+}
+
+.product-info-details .description-text {
+  color: #666;
+  line-height: 1.6;
+}
+
+.product-info-modal::-webkit-scrollbar {
+  width: 8px;
+}
+
+.product-info-modal::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 10px;
+}
+
+.product-info-modal::-webkit-scrollbar-thumb {
+  background: #888;
+  border-radius: 10px;
+}
+
+.product-info-modal::-webkit-scrollbar-thumb:hover {
+  background: #555;
+}
+
+@media (max-width: 768px) {
+  .product-info-modal {
+    width: 95% !important;
+    padding: 20px !important;
+  }
+  
+  .product-info-modal h3 {
+    font-size: 20px !important;
+  }
+}
