@@ -2,8 +2,8 @@ import { useLoaderData, useSearchParams } from "react-router";
 import { Page } from "@shopify/polaris";
 import { authenticate } from "../../shopify.server";
 import { getProducts, getProductsCount } from "../../models/product.server";
-import ProductTable from "../../components/ProductTable";
-import EmptyState from "../../components/EmptyState";
+import ProductTable from "./ProductTable";
+import EmptyState from "./EmptyState";
 import { useCallback } from "react";
 import { UPDATE_PRODUCT_TAGS_MUTATION } from "../../graphqlActions/product.grapql";
 

@@ -15,7 +15,7 @@ import {
 } from "@shopify/polaris";
 import { useCallback, useRef, useState } from "react";
 import { ImageIcon, PlusCircleIcon, XIcon } from "@shopify/polaris-icons";
-import { formatPrice, formatDate } from "../utils/format.util";
+import { formatPrice, formatDate } from "../../utils/format.util";
 import { useFetcher } from "react-router";
 
 const EditProduct = ({

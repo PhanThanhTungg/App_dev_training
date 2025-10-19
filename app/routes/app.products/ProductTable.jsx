@@ -12,8 +12,8 @@ import {
   Button,
 } from "@shopify/polaris";
 import { EditIcon, ImageIcon } from "@shopify/polaris-icons";
-import { formatPrice, formatDate } from "../utils/format.util";
-import { truncateText } from "../utils/product.util";
+import { formatPrice, formatDate } from "../../utils/format.util";
+import { truncateText } from "../../utils/product.util";
 import { useState } from "react";
 import EditProduct from "./EditProduct";
 
