@@ -12,6 +12,7 @@ import {
   Divider,
   Box,
   TextField,
+  Select,
 } from "@shopify/polaris";
 import { useCallback, useRef, useState } from "react";
 import { ImageIcon, PlusCircleIcon, XIcon } from "@shopify/polaris-icons";
@@ -24,11 +25,40 @@ const EditProduct = ({
   selectedProductEdit,
 }) => {
   const [tags, setTags] = useState(selectedProductEdit.tags);
+  const [title, setTitle] = useState(selectedProductEdit.title);
+  const [status, setStatus] = useState(selectedProductEdit.status);
+  const [description, setDescription] = useState(selectedProductEdit.description || selectedProductEdit.descriptionHtml || "");
+
+  const getCategoryFromTags = (tags) => {
+    const categoryTag = tags.find(tag => tag.startsWith("category:"));
+    return categoryTag ? categoryTag.replace("category:", "") : "";
+  };
+  
+  const [category, setCategory] = useState(getCategoryFromTags(selectedProductEdit.tags || []));
   const [addTagModal, setAddTagModal] = useState(false);
   const [isUpdating, setIsUpdating] = useState(false);
 
   const fetcher = useFetcher();
   const newTagRef = useRef(null);
+
+  const statusOptions = [
+    { label: "Active", value: "ACTIVE" },
+    { label: "Draft", value: "DRAFT" },
+    { label: "Archived", value: "ARCHIVED" },
+  ];
+
+  const categoryOptions = [
+    { label: "No Category", value: "" },
+    { label: "Electronics", value: "electronics" },
+    { label: "Clothing", value: "clothing" },
+    { label: "Home & Garden", value: "home-garden" },
+    { label: "Sports & Outdoors", value: "sports-outdoors" },
+    { label: "Health & Beauty", value: "health-beauty" },
+    { label: "Books", value: "books" },
+    { label: "Toys & Games", value: "toys-games" },
+    { label: "Food & Beverages", value: "food-beverages" },
+    { label: "Other", value: "other" },
+  ];
 
   const handleAddTagModal = () => {
     setAddTagModal(!addTagModal);
@@ -56,10 +86,18 @@ const EditProduct = ({
     try {
       setIsUpdating(true);
 
+      const filteredTags = tags.filter(tag => !tag.startsWith("category:"));
+      
+      const finalTags = category ? [...filteredTags, `category:${category}`] : filteredTags;
+
       fetcher.submit(
         {
           productId: selectedProductEdit.id,
-          tags: JSON.stringify(tags),
+          title: title,
+          status: status,
+          description: description,
+          category: category,
+          tags: JSON.stringify(finalTags),
         },
         { method: "post" },
       );
@@ -109,21 +147,76 @@ const EditProduct = ({
                   )}
                   <BlockStack gap="100">
                     <Text variant="headingMd" fontWeight="semibold" as="h3">
-                      {selectedProductEdit.title}
+                      Edit Product Details
                     </Text>
                     <Badge
                       tone={
-                        selectedProductEdit.status === "ACTIVE"
+                        status === "ACTIVE"
                           ? "success"
-                          : "warning"
+                          : status === "DRAFT"
+                          ? "warning"
+                          : "critical"
                       }
                     >
-                      {selectedProductEdit.status === "ACTIVE"
+                      {status === "ACTIVE"
                         ? "Active"
-                        : "Inactive"}
+                        : status === "DRAFT"
+                        ? "Draft"
+                        : "Archived"}
                     </Badge>
                   </BlockStack>
                 </InlineStack>
+
+                <Divider />
+
+                {/* Title Field */}
+                <Box>
+                  <TextField
+                    label="Product Title"
+                    value={title}
+                    onChange={(value) => setTitle(value)}
+                    placeholder="Enter product title"
+                    autoComplete="off"
+                  />
+                </Box>
+
+                <Divider />
+
+                {/* Status Field */}
+                <Box>
+                  <Select
+                    label="Product Status"
+                    options={statusOptions}
+                    value={status}
+                    onChange={(value) => setStatus(value)}
+                  />
+                </Box>
+
+                <Divider />
+
+                {/* Description Field */}
+                <Box>
+                  <TextField
+                    label="Product Description"
+                    value={description}
+                    onChange={(value) => setDescription(value)}
+                    placeholder="Enter product description"
+                    multiline={4}
+                    autoComplete="off"
+                  />
+                </Box>
+
+                <Divider />
+
+                {/* Category Field */}
+                <Box>
+                  <Select
+                    label="Product Category"
+                    options={categoryOptions}
+                    value={category}
+                    onChange={(value) => setCategory(value)}
+                  />
+                </Box>
 
                 <Divider />
 
@@ -157,9 +250,10 @@ const EditProduct = ({
                     </Text>
                     <Box maxWidth="60%">
                       <InlineStack gap="200" wrap={true} align="end">
-                        {tags.length > 0 ? (
+                        {/* Filter out category tags from display */}
+                        {tags.filter(tag => !tag.startsWith("category:")).length > 0 ? (
                           <InlineStack gap="200" wrap={true} align="end">
-                            {tags.map((tag, idx) => (
+                            {tags.filter(tag => !tag.startsWith("category:")).map((tag, idx) => (
                               <Badge key={idx} tone="info">
                                 <div className="flex items-center gap-1">
                                   <span>{tag}</span>

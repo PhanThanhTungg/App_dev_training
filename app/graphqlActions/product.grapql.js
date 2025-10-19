@@ -22,6 +22,8 @@ export const GET_PRODUCTS_QUERY = `
         node {
           id
           title
+          description
+          descriptionHtml
           featuredImage {
             url
             altText
@@ -77,3 +79,51 @@ export const UPDATE_PRODUCT_TAGS_MUTATION = `
     }
   }
 `;
+
+export const DELETE_PRODUCT_MUTATION = `
+  mutation DeleteProduct($input: ProductDeleteInput!) {
+    productDelete(input: $input) {
+      deletedProductId
+      userErrors {
+        field
+        message
+      }
+    }
+  }
+`;
+
+export const UPDATE_PRODUCT_STATUS_MUTATION = `
+  mutation UpdateProductStatus($id: ID!, $status: ProductStatus!) {
+    productUpdate(input: { id: $id, status: $status }) {
+      product {
+        id
+        status
+      }
+      userErrors {
+        field
+        message
+      }
+    }
+  }
+`;
+
+export const UPDATE_PRODUCT_MUTATION = `
+  mutation UpdateProduct($input: ProductInput!) {
+    productUpdate(input: $input) {
+      product {
+        id
+        title
+        description
+        descriptionHtml
+        status
+        tags
+      }
+      userErrors {
+        field
+        message
+      }
+    }
+  }
+`;
+
+

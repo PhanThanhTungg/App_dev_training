@@ -1,11 +1,11 @@
 export const TABLE_HEADINGS = [
-  { title: "Image" },
-  { title: "Title" },
-  { title: "Price" },
-  { title: "Tags" },
-  { title: "Status" },
-  { title: "Created At" },
-  { title: "Actions" },
+  { title: "Image", width: "80px" },
+  { title: "Title", width: "25%" },
+  { title: "Price", width: "12%" },
+  { title: "Tags", width: "20%" },
+  { title: "Status", width: "10%" },
+  { title: "Created At", width: "18%" },
+  { title: "Actions", width: "120px" },
 ];
 
 export const RESOURCE_NAME = {

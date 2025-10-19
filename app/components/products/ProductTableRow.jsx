@@ -6,14 +6,24 @@ import {
   InlineStack,
   Icon,
   Button,
+  ButtonGroup,
+  useBreakpoints,
 } from "@shopify/polaris";
-import { EditIcon, ImageIcon } from "@shopify/polaris-icons";
+import { EditIcon, ImageIcon, DeleteIcon } from "@shopify/polaris-icons";
 import { formatPrice, formatDate } from "../../utils/format.util";
 import { truncateText, getProductStatusText, getProductStatusTone } from "../../utils/product.util";
 
-const ProductTableRow = ({ product, index, isSelected, onEdit }) => {
-  const handleEdit = () => {
+const ProductTableRow = ({ product, index, isSelected, onEdit, onDelete }) => {
+  const { smDown } = useBreakpoints();
+  
+  const handleEdit = (event) => {
+    event.stopPropagation();
     onEdit(product);
+  };
+
+  const handleDelete = (event) => {
+    event.stopPropagation();
+    onDelete(product);
   };
 
   return (
@@ -48,9 +58,11 @@ const ProductTableRow = ({ product, index, isSelected, onEdit }) => {
       </IndexTable.Cell>
 
       <IndexTable.Cell>
-        <Text variant="bodyMd" fontWeight="semibold" as="span">
-          {truncateText(product.title, 40)}
-        </Text>
+        <div style={{ maxWidth: '100%', overflow: 'hidden' }}>
+          <Text variant="bodyMd" fontWeight="semibold" as="span">
+            {truncateText(product.title, 35)}
+          </Text>
+        </div>
       </IndexTable.Cell>
 
       <IndexTable.Cell>
@@ -59,18 +71,20 @@ const ProductTableRow = ({ product, index, isSelected, onEdit }) => {
 
       <IndexTable.Cell>
         {product.tags.length > 0 ? (
-          <InlineStack gap="200" wrap={false}>
-            {product.tags.slice(0, 3).map((tag, idx) => (
-              <Badge key={idx} tone="info">
-                {truncateText(tag, 15)}
-              </Badge>
-            ))}
-            {product.tags.length > 3 && (
-              <Text as="span" tone="subdued">
-                +{product.tags.length - 3}
-              </Text>
-            )}
-          </InlineStack>
+          <div style={{ maxWidth: '100%', overflow: 'hidden' }}>
+            <InlineStack gap="100" wrap={false}>
+              {product.tags.filter(tag => !tag.startsWith("category:")).slice(0, 2).map((tag, idx) => (
+                <Badge key={idx} tone="info">
+                  {truncateText(tag, 12)}
+                </Badge>
+              ))}
+              {product.tags.filter(tag => !tag.startsWith("category:")).length > 2 && (
+                <Text as="span" tone="subdued" variant="bodySm">
+                  +{product.tags.filter(tag => !tag.startsWith("category:")).length - 2}
+                </Text>
+              )}
+            </InlineStack>
+          </div>
         ) : (
           <Text as="span" tone="subdued">
             none
@@ -91,9 +105,30 @@ const ProductTableRow = ({ product, index, isSelected, onEdit }) => {
       </IndexTable.Cell>
 
       <IndexTable.Cell>
-        <Button variant="primary" icon={EditIcon} onClick={handleEdit}>
-          Edit
-        </Button>
+        <div style={{ 
+          display: 'flex', 
+          gap: '8px', 
+          minWidth: '80px',
+          justifyContent: 'flex-start',
+          alignItems: 'center',
+          whiteSpace: 'nowrap'
+        }}>
+          <Button 
+            size="small"
+            variant="tertiary" 
+            icon={EditIcon} 
+            onClick={handleEdit}
+            accessibilityLabel="Edit product"
+          />
+          <Button 
+            size="small"
+            variant="tertiary" 
+            tone="critical" 
+            icon={DeleteIcon} 
+            onClick={handleDelete}
+            accessibilityLabel="Delete product"
+          />
+        </div>
       </IndexTable.Cell>
     </IndexTable.Row>
   );

@@ -1,1 +1,22 @@
 @import "tailwindcss";
+
+/* Custom table styles for responsive design */
+.Polaris-IndexTable {
+  width: 100% !important;
+  table-layout: fixed !important;
+}
+
+.Polaris-IndexTable-Table {
+  width: 100% !important;
+  table-layout: fixed !important;
+}
+
+.Polaris-IndexTable-Cell {
+  word-wrap: break-word !important;
+  overflow: hidden !important;
+}
+
+/* Ensure no horizontal scroll */
+.Polaris-Card {
+  overflow-x: hidden !important;
+}

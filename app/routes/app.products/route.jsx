@@ -1,10 +1,15 @@
-import { useLoaderData, useNavigation, useSearchParams } from "react-router";
-import { Page } from "@shopify/polaris";
+import { useLoaderData, useNavigation, useSearchParams, useSubmit, useActionData } from "react-router";
+import { Page, Toast, Frame } from "@shopify/polaris";
 import { authenticate } from "../../shopify.server";
 import { getProducts, getProductsCount } from "../../models/product.server";
 import ProductTable from "./ProductTable";
-import { useCallback } from "react";
-import { UPDATE_PRODUCT_TAGS_MUTATION } from "../../graphqlActions/product.grapql";
+import { useCallback, useState, useEffect } from "react";
+import { 
+  UPDATE_PRODUCT_TAGS_MUTATION, 
+  DELETE_PRODUCT_MUTATION,
+  UPDATE_PRODUCT_STATUS_MUTATION,
+  UPDATE_PRODUCT_MUTATION
+} from "../../graphqlActions/product.grapql";
 import { buildProductsQuery } from "../../utils/network.util";
 
 export async function loader({ request }) {
@@ -97,29 +102,236 @@ export async function action({ request }) {
   const { admin } = await authenticate.admin(request);
   const formData = await request.formData();
   
-  const productId = formData.get("productId");
-  const tags = JSON.parse(formData.get("tags"));
-  try {
-    const response = await admin.graphql(UPDATE_PRODUCT_TAGS_MUTATION, {
-      variables: {
-        id: productId,
-        tags: tags,
-      },
-    });
+  const actionType = formData.get("actionType");
 
-    const data = await response.json();
+  // Bulk Delete
+  if (actionType === "bulkDelete") {
+    const productIds = JSON.parse(formData.get("productIds"));
+    
+    try {
+      const results = [];
+      const errors = [];
+      
+      for (const productId of productIds) {
+        const response = await admin.graphql(DELETE_PRODUCT_MUTATION, {
+          variables: {
+            input: {
+              id: productId,
+            },
+          },
+        });
 
-    if (data.data.productUpdate.userErrors.length > 0) {
+        const data = await response.json();
+        
+        if (data.data.productDelete.userErrors.length > 0) {
+          errors.push(...data.data.productDelete.userErrors);
+        } else {
+          results.push(data.data.productDelete.deletedProductId);
+        }
+      }
+
+      if (errors.length > 0) {
+        return {
+          success: false,
+          errors: errors,
+          partialSuccess: results.length > 0,
+          deletedCount: results.length,
+        };
+      }
+
+      return {
+        success: true,
+        deletedCount: results.length,
+        deletedProductIds: results,
+      };
+    } catch (error) {
       return {
         success: false,
-        errors: data.data.productUpdate.userErrors,
+        error: error.message,
       };
     }
+  }
 
-    return {
-      success: true,
-      product: data.data.productUpdate.product,
-    };
+  // Bulk Add Tags
+  if (actionType === "bulkAddTags") {
+    const productIds = JSON.parse(formData.get("productIds"));
+    const newTags = JSON.parse(formData.get("newTags"));
+    
+    try {
+      const results = [];
+      for (const productId of productIds) {
+        // Get current product to merge tags
+        const currentProduct = await admin.graphql(`
+          query GetProduct($id: ID!) {
+            product(id: $id) {
+              id
+              tags
+            }
+          }
+        `, { variables: { id: productId } });
+        
+        const currentData = await currentProduct.json();
+        const existingTags = currentData.data.product.tags || [];
+        const mergedTags = [...new Set([...existingTags, ...newTags])];
+        
+        const response = await admin.graphql(UPDATE_PRODUCT_TAGS_MUTATION, {
+          variables: {
+            id: productId,
+            tags: mergedTags,
+          },
+        });
+        
+        const data = await response.json();
+        results.push(data);
+      }
+
+      return {
+        success: true,
+        results,
+      };
+    } catch (error) {
+      return {
+        success: false,
+        error: error.message,
+      };
+    }
+  }
+
+  // Bulk Update Status
+  if (actionType === "bulkUpdateStatus") {
+    const productIds = JSON.parse(formData.get("productIds"));
+    const newStatus = formData.get("newStatus");
+    
+    try {
+      const results = [];
+      for (const productId of productIds) {
+        const response = await admin.graphql(UPDATE_PRODUCT_STATUS_MUTATION, {
+          variables: {
+            id: productId,
+            status: newStatus,
+          },
+        });
+        
+        const data = await response.json();
+        results.push(data);
+      }
+
+      return {
+        success: true,
+        results,
+      };
+    } catch (error) {
+      return {
+        success: false,
+        error: error.message,
+      };
+    }
+  }
+
+  // Single Delete
+  if (actionType === "delete") {
+    const productId = formData.get("productId");
+    
+    try {
+      const response = await admin.graphql(DELETE_PRODUCT_MUTATION, {
+        variables: {
+          input: {
+            id: productId,
+          },
+        },
+      });
+
+      const data = await response.json();
+
+      if (data.data.productDelete.userErrors.length > 0) {
+        return {
+          success: false,
+          errors: data.data.productDelete.userErrors,
+        };
+      }
+
+      return {
+        success: true,
+        deletedProductId: data.data.productDelete.deletedProductId,
+      };
+    } catch (error) {
+      return {
+        success: false,
+        error: error.message,
+      };
+    }
+  }
+
+  // Default to update product action
+  const productId = formData.get("productId");
+  const tags = JSON.parse(formData.get("tags"));
+  const title = formData.get("title");
+  const status = formData.get("status");
+  const description = formData.get("description");
+  const category = formData.get("category");
+  
+  try {
+    if (title || status || description || category) {
+      const updateInput = {
+        id: productId,
+      };
+      
+      if (title) updateInput.title = title;
+      if (status) updateInput.status = status;
+      if (description) updateInput.descriptionHtml = description;
+      if (tags) updateInput.tags = tags;
+
+      if (category) {
+        const allTags = tags || [];
+        const categoryTag = `category:${category}`;
+        if (!allTags.includes(categoryTag)) {
+          allTags.push(categoryTag);
+        }
+        updateInput.tags = allTags;
+      }
+
+      const response = await admin.graphql(UPDATE_PRODUCT_MUTATION, {
+        variables: {
+          input: updateInput,
+        },
+      });
+
+      const data = await response.json();
+
+      if (data.data.productUpdate.userErrors.length > 0) {
+        return {
+          success: false,
+          errors: data.data.productUpdate.userErrors,
+        };
+      }
+
+      return {
+        success: true,
+        product: data.data.productUpdate.product,
+      };
+    } else {
+      // Fallback to just updating tags
+      const response = await admin.graphql(UPDATE_PRODUCT_TAGS_MUTATION, {
+        variables: {
+          id: productId,
+          tags: tags,
+        },
+      });
+
+      const data = await response.json();
+
+      if (data.data.productUpdate.userErrors.length > 0) {
+        return {
+          success: false,
+          errors: data.data.productUpdate.userErrors,
+        };
+      }
+
+      return {
+        success: true,
+        product: data.data.productUpdate.product,
+      };
+    }
   } catch (error) {
     return {
       success: false,
@@ -134,10 +346,63 @@ export default function Products() {
   const products = edges.map((edge) => edge.node);
   const [searchParams, setSearchParams] = useSearchParams();
   const navigation = useNavigation();
+  const submit = useSubmit();
+  const actionData = useActionData();
   const queryFilter = searchParams.get("query") || "";
   const currentQueryParam = buildProductsQuery(queryFilter) ? queryFilter : "";
   const currentSort = searchParams.get("sort") || sort;
   const isLoading = navigation.state !== "idle";
+
+  // Toast state
+  const [toastContent, setToastContent] = useState(null);
+  const [toastError, setToastError] = useState(false);
+
+  // Handle action results
+  useEffect(() => {
+    if (actionData) {
+      if (actionData.success) {
+        if (actionData.deletedCount !== undefined) {
+          setToastContent(`Successfully deleted ${actionData.deletedCount} product${actionData.deletedCount > 1 ? 's' : ''}`);
+          setToastError(false);
+        } else if (actionData.results) {
+          setToastContent(`Bulk operation completed successfully`);
+          setToastError(false);
+        } else {
+          setToastContent(`Operation completed successfully`);
+          setToastError(false);
+        }
+      } else {
+        let errorMessage = "Operation failed";
+        if (actionData.partialSuccess) {
+          errorMessage = `Partial success: ${actionData.deletedCount} products deleted, but some failed`;
+        } else if (actionData.error) {
+          errorMessage = actionData.error;
+        } else if (actionData.errors && actionData.errors.length > 0) {
+          errorMessage = actionData.errors[0].message;
+        }
+        setToastContent(errorMessage);
+        setToastError(true);
+      }
+    }
+  }, [actionData]);
+
+  // Handle action response
+  useEffect(() => {
+    if (actionData) {
+      if (actionData.success) {
+        if (actionData.deletedProductId) {
+          setToastContent("Product deleted successfully");
+          setToastError(false);
+        } else if (actionData.product) {
+          setToastContent("Product updated successfully");
+          setToastError(false);
+        }
+      } else {
+        setToastContent(actionData.error || "An error occurred");
+        setToastError(true);
+      }
+    }
+  }, [actionData]);
 
   const handlePrevious = useCallback(() => {
     if (edges.length > 0) {
@@ -307,30 +572,98 @@ export default function Products() {
     [limit, currentQueryParam, setSearchParams, searchParams],
   );
 
+  const handleDelete = useCallback(
+    async (productId) => {
+      const formData = new FormData();
+      formData.append("actionType", "delete");
+      formData.append("productId", productId);
+      
+      submit(formData, { 
+        method: "POST",
+      });
+    },
+    [submit],
+  );
+
+  const handleBulkDelete = useCallback(
+    async (productIds) => {
+      const formData = new FormData();
+      formData.append("actionType", "bulkDelete");
+      formData.append("productIds", JSON.stringify(productIds));
+      
+      submit(formData, { 
+        method: "POST",
+      });
+    },
+    [submit],
+  );
+
+  const handleBulkAddTags = useCallback(
+    async (selectedProducts, newTags) => {
+      const formData = new FormData();
+      formData.append("actionType", "bulkAddTags");
+      formData.append("productIds", JSON.stringify(selectedProducts.map(p => p.id)));
+      formData.append("newTags", JSON.stringify(newTags));
+      
+      submit(formData, { 
+        method: "POST",
+      });
+    },
+    [submit],
+  );
+
+  const handleBulkUpdateStatus = useCallback(
+    async (productIds, newStatus) => {
+      const formData = new FormData();
+      formData.append("actionType", "bulkUpdateStatus");
+      formData.append("productIds", JSON.stringify(productIds));
+      formData.append("newStatus", newStatus);
+      
+      submit(formData, { 
+        method: "POST",
+      });
+    },
+    [submit],
+  );
+
   return (
     <>
-      <Page title="Product Management">
-        <ProductTable
-          products={products}
-          pageInfo={pageInfo}
-          totalPages={totalPages}
-          totalCount={totalCount}
-          limit={limit.toString()}
-          initialQuery={query}
-          initialSort={currentSort}
-          initialTab={tab}
-          initialTaggedWith={taggedWith}
-          initialPriceRange={priceRange}
-          onPrevious={handlePrevious}
-          onNext={handleNext}
-          onLimitChange={handleLimitChange}
-          onSearchChange={handleSearchChange}
-          onFiltersChange={handleFiltersChange}
-          onSortChange={handleSortChange}
-          onTabChange={handleTabChange}
-          isLoading={isLoading}
-        />
-      </Page>
+      <Frame>
+        <Page title="Product Management">
+          <ProductTable
+            products={products}
+            pageInfo={pageInfo}
+            totalPages={totalPages}
+            totalCount={totalCount}
+            limit={limit.toString()}
+            initialQuery={query}
+            initialSort={currentSort}
+            initialTab={tab}
+            initialTaggedWith={taggedWith}
+            initialPriceRange={priceRange}
+            onPrevious={handlePrevious}
+            onNext={handleNext}
+            onLimitChange={handleLimitChange}
+            onSearchChange={handleSearchChange}
+            onFiltersChange={handleFiltersChange}
+            onSortChange={handleSortChange}
+            onTabChange={handleTabChange}
+            onDelete={handleDelete}
+            onBulkDelete={handleBulkDelete}
+            onBulkAddTags={handleBulkAddTags}
+            onBulkUpdateStatus={handleBulkUpdateStatus}
+            isLoading={isLoading}
+          />
+        </Page>
+        
+        {toastContent && (
+          <Toast
+            content={toastContent}
+            error={toastError}
+            onDismiss={() => setToastContent(null)}
+          />
+        )}
+      </Frame>
     </>
   );
 }
