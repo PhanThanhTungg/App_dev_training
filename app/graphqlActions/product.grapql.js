@@ -1,6 +1,18 @@
 export const GET_PRODUCTS_QUERY = `
-  query GetProducts($first: Int, $after: String, $last: Int, $before: String) {
-    products(first: $first, after: $after, last: $last, before: $before) {
+  query GetProducts(
+    $first: Int
+    $after: String
+    $last: Int
+    $before: String
+    $query: String
+  ) {
+    products(
+      first: $first
+      after: $after
+      last: $last
+      before: $before
+      query: $query
+    ) {
       edges {
         cursor
         node {
@@ -40,8 +52,8 @@ export const GET_PRODUCTS_QUERY = `
 `;
 
 export const GET_PRODUCTS_COUNT_QUERY = `
-  query GetProductsCount {
-    productsCount {
+  query GetProductsCount($query: String) {
+    productsCount(query: $query) {
       count
     }
   }
