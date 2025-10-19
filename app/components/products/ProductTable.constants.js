@@ -26,12 +26,7 @@ export const CARD_LOADING_OVERLAY_STYLES = {
   zIndex: 1,
 };
 
-export const DEFAULT_VIEW_TABS = [
-  "All",
-  "Active",
-  "Draft", 
-  "Archived",
-];
+export const DEFAULT_VIEW_TABS = ["All", "Active", "Draft", "Archived"];
 
 export const SORT_OPTIONS = [
   { label: "Title", value: "title asc", directionLabel: "A-Z" },

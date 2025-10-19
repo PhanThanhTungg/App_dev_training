@@ -11,12 +11,7 @@ import { EditIcon, ImageIcon } from "@shopify/polaris-icons";
 import { formatPrice, formatDate } from "../../utils/format.util";
 import { truncateText } from "../../utils/product.util";
 
-const ProductTableRow = ({ 
-  product, 
-  index, 
-  isSelected, 
-  onEdit 
-}) => {
+const ProductTableRow = ({ product, index, isSelected, onEdit }) => {
   const handleEdit = () => {
     onEdit(product);
   };
@@ -51,17 +46,17 @@ const ProductTableRow = ({
           </div>
         )}
       </IndexTable.Cell>
-      
+
       <IndexTable.Cell>
         <Text variant="bodyMd" fontWeight="semibold" as="span">
           {truncateText(product.title, 40)}
         </Text>
       </IndexTable.Cell>
-      
+
       <IndexTable.Cell>
         <Text as="span">{formatPrice(product.priceRangeV2)}</Text>
       </IndexTable.Cell>
-      
+
       <IndexTable.Cell>
         {product.tags.length > 0 ? (
           <InlineStack gap="200" wrap={false}>
@@ -82,25 +77,21 @@ const ProductTableRow = ({
           </Text>
         )}
       </IndexTable.Cell>
-      
+
       <IndexTable.Cell>
         <Badge tone={product.status === "ACTIVE" ? "success" : "warning"}>
           {product.status === "ACTIVE" ? "active" : "inactive"}
         </Badge>
       </IndexTable.Cell>
-      
+
       <IndexTable.Cell>
         <Text as="span" tone="subdued">
           {formatDate(product.createdAt)}
         </Text>
       </IndexTable.Cell>
-      
+
       <IndexTable.Cell>
-        <Button
-          variant="primary"
-          icon={EditIcon}
-          onClick={handleEdit}
-        >
+        <Button variant="primary" icon={EditIcon} onClick={handleEdit}>
           Edit
         </Button>
       </IndexTable.Cell>

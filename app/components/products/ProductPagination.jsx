@@ -1,10 +1,4 @@
-import {
-  Pagination,
-  Box,
-  Select,
-  InlineStack,
-  Text,
-} from "@shopify/polaris";
+import { Pagination, Box, Select, InlineStack, Text } from "@shopify/polaris";
 
 const ProductPagination = ({
   pageInfo,

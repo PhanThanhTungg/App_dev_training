@@ -5,22 +5,53 @@ import {
 import { buildProductsQuery } from "../utils/network.util";
 
 export async function getProducts(admin, options = {}) {
-  const { 
-    limit = 10, 
-    after = null, 
+  const {
+    limit = 10,
+    after = null,
     before = null,
     direction = 'forward',
     query = null,
+    sort = null,
   } = options;
 
   try {
-    const baseVariables = direction === 'forward' 
+    const baseVariables = direction === 'forward'
       ? { first: limit, after }
       : { last: limit, before };
+
+    let sortKey = null;
+    let reverse = false;
+
+    if (sort) {
+      const [field, direction] = sort[0].split(' ');
+      switch (field) {
+        case 'title':
+          sortKey = 'TITLE';
+          reverse = direction === 'desc';
+          break;
+        case 'price':
+          sortKey = null;
+          reverse = direction === 'desc';
+          break;
+        case 'created':
+          sortKey = 'CREATED_AT';
+          reverse = direction === 'desc';
+          break;
+        case 'updated':
+          sortKey = 'UPDATED_AT';
+          reverse = direction === 'desc';
+          break;
+        default:
+          sortKey = 'CREATED_AT';
+          reverse = true;
+      }
+    }
 
     const variables = {
       ...baseVariables,
       query: buildProductsQuery(query) || undefined,
+      sortKey: sortKey || undefined,
+      reverse: reverse || undefined,
     };
 
     const response = await admin.graphql(GET_PRODUCTS_QUERY, {

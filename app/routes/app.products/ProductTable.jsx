@@ -24,6 +24,7 @@ const ProductTable = ({
   totalCount,
   limit,
   initialQuery = "",
+  initialSort = "created desc",
   onPrevious,
   onNext,
   onLimitChange,
@@ -71,6 +72,7 @@ const ProductTable = ({
         <Card padding="0">
           <ProductFilters
             initialQuery={initialQuery}
+            initialSort={initialSort}
             onSearchChange={onSearchChange}
             onFiltersChange={onFiltersChange}
             onSortChange={onSortChange}

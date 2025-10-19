@@ -9,6 +9,7 @@ import { useState, useCallback, useEffect, useRef } from "react";
 
 const ProductFilters = ({
   initialQuery = "",
+  initialSort = "created desc",
   onSearchChange,
   onFiltersChange,
   onSortChange,
@@ -24,7 +25,7 @@ const ProductFilters = ({
   // Tabs/Views state
   const [itemStrings, setItemStrings] = useState([
     "All",
-    "Active", 
+    "Active",
     "Draft",
     "Archived",
   ]);
@@ -34,7 +35,7 @@ const ProductFilters = ({
   const [productStatus, setProductStatus] = useState(undefined);
   const [taggedWith, setTaggedWith] = useState("");
   const [priceRange, setPriceRange] = useState(undefined);
-  const [sortSelected, setSortSelected] = useState(["created desc"]);
+  const [sortSelected, setSortSelected] = useState([initialSort]);
 
   // Sort options
   const sortOptions = [
@@ -51,6 +52,11 @@ const ProductFilters = ({
     skipSearchCallbackRef.current = true;
     setQueryValue(initialQuery);
   }, [initialQuery]);
+
+  // Sort effect
+  useEffect(() => {
+    setSortSelected([initialSort]);
+  }, [initialSort]);
 
   useEffect(() => {
     if (typeof onSearchChange !== "function") {
@@ -75,7 +81,7 @@ const ProductFilters = ({
       setProductStatus(value);
       onFiltersChange?.({ productStatus: value, taggedWith, priceRange });
     },
-    [taggedWith, priceRange, onFiltersChange]
+    [taggedWith, priceRange, onFiltersChange],
   );
 
   const handleTaggedWithChange = useCallback(
@@ -83,7 +89,7 @@ const ProductFilters = ({
       setTaggedWith(value);
       onFiltersChange?.({ productStatus, taggedWith: value, priceRange });
     },
-    [productStatus, priceRange, onFiltersChange]
+    [productStatus, priceRange, onFiltersChange],
   );
 
   const handlePriceRangeChange = useCallback(
@@ -91,12 +97,12 @@ const ProductFilters = ({
       setPriceRange(value);
       onFiltersChange?.({ productStatus, taggedWith, priceRange: value });
     },
-    [productStatus, taggedWith, onFiltersChange]
+    [productStatus, taggedWith, onFiltersChange],
   );
 
   const handleFiltersQueryChange = useCallback(
     (value) => setQueryValue(value),
-    []
+    [],
   );
 
   const handleSortChange = useCallback(
@@ -104,33 +110,24 @@ const ProductFilters = ({
       setSortSelected(value);
       onSortChange?.(value);
     },
-    [onSortChange]
+    [onSortChange],
   );
 
   // Remove handlers
-  const handleProductStatusRemove = useCallback(
-    () => {
-      setProductStatus(undefined);
-      onFiltersChange?.({ productStatus: undefined, taggedWith, priceRange });
-    },
-    [taggedWith, priceRange, onFiltersChange]
-  );
+  const handleProductStatusRemove = useCallback(() => {
+    setProductStatus(undefined);
+    onFiltersChange?.({ productStatus: undefined, taggedWith, priceRange });
+  }, [taggedWith, priceRange, onFiltersChange]);
 
-  const handleTaggedWithRemove = useCallback(
-    () => {
-      setTaggedWith("");
-      onFiltersChange?.({ productStatus, taggedWith: "", priceRange });
-    },
-    [productStatus, priceRange, onFiltersChange]
-  );
+  const handleTaggedWithRemove = useCallback(() => {
+    setTaggedWith("");
+    onFiltersChange?.({ productStatus, taggedWith: "", priceRange });
+  }, [productStatus, priceRange, onFiltersChange]);
 
-  const handlePriceRangeRemove = useCallback(
-    () => {
-      setPriceRange(undefined);
-      onFiltersChange?.({ productStatus, taggedWith, priceRange: undefined });
-    },
-    [productStatus, taggedWith, onFiltersChange]
-  );
+  const handlePriceRangeRemove = useCallback(() => {
+    setPriceRange(undefined);
+    onFiltersChange?.({ productStatus, taggedWith, priceRange: undefined });
+  }, [productStatus, taggedWith, onFiltersChange]);
 
   const handleQueryValueRemove = useCallback(() => setQueryValue(""), []);
 

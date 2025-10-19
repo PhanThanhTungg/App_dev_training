@@ -5,6 +5,8 @@ export const GET_PRODUCTS_QUERY = `
     $last: Int
     $before: String
     $query: String
+    $sortKey: ProductSortKeys
+    $reverse: Boolean
   ) {
     products(
       first: $first
@@ -12,6 +14,8 @@ export const GET_PRODUCTS_QUERY = `
       last: $last
       before: $before
       query: $query
+      sortKey: $sortKey
+      reverse: $reverse
     ) {
       edges {
         cursor

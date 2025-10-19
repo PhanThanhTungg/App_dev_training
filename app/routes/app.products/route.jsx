@@ -15,6 +15,7 @@ export async function loader({ request }) {
   const after = url.searchParams.get("after") || null;
   const before = url.searchParams.get("before") || null;
   const query = url.searchParams.get("query")?.trim() || null;
+  const sort = url.searchParams.get("sort") || null;
   const direction = before ? "backward" : "forward";
 
   const [result, totalCount] = await Promise.all([
@@ -24,17 +25,34 @@ export async function loader({ request }) {
       before,
       direction,
       query,
+      sort: sort ? [sort] : null,
     }),
     getProductsCount(admin, { query }),
   ]);
 
+  let edges = result.edges;
+  const currentSort = sort || "created desc";
+
+  if (currentSort.includes("price")) {
+    const [, direction] = currentSort.split(' ');
+    const isDesc = direction === 'desc';
+
+    edges = [...result.edges].sort((a, b) => {
+      const priceA = parseFloat(a.node.priceRangeV2?.minVariantPrice?.amount || 0);
+      const priceB = parseFloat(b.node.priceRangeV2?.minVariantPrice?.amount || 0);
+
+      return isDesc ? priceB - priceA : priceA - priceB;
+    });
+  }
+
   return {
     pageInfo: result.pageInfo,
-    edges: result.edges,
+    edges,
     limit,
     totalCount,
     totalPages: Math.ceil(totalCount / limit),
     query: query || "",
+    sort: currentSort,
   };
 }
 
@@ -74,13 +92,14 @@ export async function action({ request }) {
 }
 
 export default function Products() {
-  const { pageInfo, edges, limit, totalCount, totalPages, query } =
+  const { pageInfo, edges, limit, totalCount, totalPages, query, sort } =
     useLoaderData();
   const products = edges.map((edge) => edge.node);
   const [searchParams, setSearchParams] = useSearchParams();
   const navigation = useNavigation();
   const queryFilter = searchParams.get("query") || "";
   const currentQueryParam = buildProductsQuery(queryFilter) ? queryFilter : "";
+  const currentSort = searchParams.get("sort") || sort;
   const isLoading = navigation.state !== "idle";
 
   const handlePrevious = useCallback(() => {
@@ -91,9 +110,11 @@ export default function Products() {
       if (currentQueryParam) {
         params.set("query", currentQueryParam);
       }
+      const currentSort = searchParams.get("sort") || "created desc";
+      params.set("sort", currentSort);
       setSearchParams(params);
     }
-  }, [edges, limit, queryFilter, setSearchParams]);
+  }, [edges, limit, queryFilter, setSearchParams, searchParams]);
 
   const handleNext = useCallback(() => {
     if (edges.length > 0) {
@@ -103,9 +124,11 @@ export default function Products() {
       if (currentQueryParam) {
         params.set("query", currentQueryParam);
       }
+      const currentSort = searchParams.get("sort") || "created desc";
+      params.set("sort", currentSort);
       setSearchParams(params);
     }
-  }, [edges, limit, queryFilter, setSearchParams]);
+  }, [edges, limit, queryFilter, setSearchParams, searchParams]);
 
   const handleLimitChange = useCallback(
     (value) => {
@@ -114,9 +137,11 @@ export default function Products() {
       if (currentQueryParam) {
         params.set("query", currentQueryParam);
       }
+      const currentSort = searchParams.get("sort") || "created desc";
+      params.set("sort", currentSort);
       setSearchParams(params);
     },
-    [queryFilter, setSearchParams],
+    [queryFilter, setSearchParams, searchParams],
   );
 
   const handleSearchChange = useCallback(
@@ -127,9 +152,24 @@ export default function Products() {
       if (trimmedValue && buildProductsQuery(trimmedValue)) {
         params.set("query", trimmedValue);
       }
+      const currentSort = searchParams.get("sort") || "created desc";
+      params.set("sort", currentSort);
       setSearchParams(params);
     },
-    [limit, setSearchParams],
+    [limit, setSearchParams, searchParams],
+  );
+
+  const handleSortChange = useCallback(
+    (value) => {
+      const params = new URLSearchParams();
+      params.set("limit", limit.toString());
+      if (currentQueryParam) {
+        params.set("query", currentQueryParam);
+      }
+      params.set("sort", value[0]);
+      setSearchParams(params);
+    },
+    [limit, currentQueryParam, setSearchParams],
   );
 
   return (
@@ -142,10 +182,12 @@ export default function Products() {
           totalCount={totalCount}
           limit={limit.toString()}
           initialQuery={query}
+          initialSort={currentSort}
           onPrevious={handlePrevious}
           onNext={handleNext}
           onLimitChange={handleLimitChange}
           onSearchChange={handleSearchChange}
+          onSortChange={handleSortChange}
           isLoading={isLoading}
         />
       </Page>
