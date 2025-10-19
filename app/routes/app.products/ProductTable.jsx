@@ -25,12 +25,16 @@ const ProductTable = ({
   limit,
   initialQuery = "",
   initialSort = "created desc",
+  initialTab = 0,
+  initialTaggedWith = "",
+  initialPriceRange = null,
   onPrevious,
   onNext,
   onLimitChange,
   onSearchChange,
   onFiltersChange,
   onSortChange,
+  onTabChange,
   isLoading = false,
 }) => {
   const [editModalState, setEditModalState] = useState(false);
@@ -73,9 +77,13 @@ const ProductTable = ({
           <ProductFilters
             initialQuery={initialQuery}
             initialSort={initialSort}
+            initialTab={initialTab}
+            initialTaggedWith={initialTaggedWith}
+            initialPriceRange={initialPriceRange}
             onSearchChange={onSearchChange}
             onFiltersChange={onFiltersChange}
             onSortChange={onSortChange}
+            onTabChange={onTabChange}
             onViewChange={() => {}}
             onCreateNewView={() => {}}
             onSaveView={() => {}}

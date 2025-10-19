@@ -10,6 +10,9 @@ import { useState, useCallback, useEffect, useRef } from "react";
 const ProductFilters = ({
   initialQuery = "",
   initialSort = "created desc",
+  initialTab = 0,
+  initialTaggedWith = "",
+  initialPriceRange = null,
   onSearchChange,
   onFiltersChange,
   onSortChange,
@@ -17,10 +20,12 @@ const ProductFilters = ({
   onCreateNewView,
   onSaveView,
   onCancelView,
+  onTabChange,
 }) => {
   const { mode, setMode } = useSetIndexFiltersMode();
   const [queryValue, setQueryValue] = useState(initialQuery);
   const skipSearchCallbackRef = useRef(true);
+  const skipSortCallbackRef = useRef(true);
 
   // Tabs/Views state
   const [itemStrings, setItemStrings] = useState([
@@ -29,12 +34,12 @@ const ProductFilters = ({
     "Draft",
     "Archived",
   ]);
-  const [selected, setSelected] = useState(0);
+  const [selected, setSelected] = useState(initialTab);
 
   // Filter states
   const [productStatus, setProductStatus] = useState(undefined);
-  const [taggedWith, setTaggedWith] = useState("");
-  const [priceRange, setPriceRange] = useState(undefined);
+  const [taggedWith, setTaggedWith] = useState(initialTaggedWith);
+  const [priceRange, setPriceRange] = useState(initialPriceRange);
   const [sortSelected, setSortSelected] = useState([initialSort]);
 
   // Sort options
@@ -53,10 +58,43 @@ const ProductFilters = ({
     setQueryValue(initialQuery);
   }, [initialQuery]);
 
-  // Sort effect
   useEffect(() => {
+    skipSortCallbackRef.current = true;
     setSortSelected([initialSort]);
   }, [initialSort]);
+
+  // Tab sync effect
+  useEffect(() => {
+    setSelected(initialTab);
+    
+    // Sync productStatus with initialTab
+    const tabName = itemStrings[initialTab];
+    let statusFilter = null;
+    switch(tabName?.toLowerCase()) {
+      case 'active':
+        statusFilter = ['active'];
+        break;
+      case 'draft':
+        statusFilter = ['draft'];
+        break;
+      case 'archived':
+        statusFilter = ['archived'];
+        break;
+      default: // 'all'
+        statusFilter = null;
+        break;
+    }
+    setProductStatus(statusFilter);
+  }, [initialTab, itemStrings]);
+
+  // Sync other filter states with initial values
+  useEffect(() => {
+    setTaggedWith(initialTaggedWith);
+  }, [initialTaggedWith]);
+
+  useEffect(() => {
+    setPriceRange(initialPriceRange);
+  }, [initialPriceRange]);
 
   useEffect(() => {
     if (typeof onSearchChange !== "function") {
@@ -108,9 +146,17 @@ const ProductFilters = ({
   const handleSortChange = useCallback(
     (value) => {
       setSortSelected(value);
-      onSortChange?.(value);
+      
+      if (skipSortCallbackRef.current) {
+        skipSortCallbackRef.current = false;
+        return;
+      }
+      
+      if (sortSelected[0] !== value[0]) {
+        onSortChange?.(value);
+      }
     },
-    [onSortChange],
+    [onSortChange, sortSelected],
   );
 
   // Remove handlers
@@ -159,6 +205,32 @@ const ProductFilters = ({
     await sleep(1);
     return true;
   };
+
+  const handleTabSelect = useCallback((selectedIndex) => {
+    setSelected(selectedIndex);
+    const tabName = itemStrings[selectedIndex];
+    
+    // Map tab names to status filter values
+    let statusFilter = null;
+    switch(tabName.toLowerCase()) {
+      case 'active':
+        statusFilter = ['active'];
+        break;
+      case 'draft':
+        statusFilter = ['draft'];
+        break;
+      case 'archived':
+        statusFilter = ['archived'];
+        break;
+      default: // 'all'
+        statusFilter = null;
+        break;
+    }
+    
+    // Update productStatus state and call onTabChange
+    setProductStatus(statusFilter);
+    onTabChange?.(selectedIndex, statusFilter);
+  }, [itemStrings, onTabChange]);
 
   const tabs = itemStrings.map((item, index) => ({
     content: item,
@@ -338,7 +410,7 @@ const ProductFilters = ({
       }}
       tabs={tabs}
       selected={selected}
-      onSelect={setSelected}
+      onSelect={handleTabSelect}
       canCreateNewView
       onCreateNewView={handleCreateNewView}
       filters={filters}

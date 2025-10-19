@@ -11,6 +11,7 @@ export async function getProducts(admin, options = {}) {
     before = null,
     direction = 'forward',
     query = null,
+    filters = {},
     sort = null,
   } = options;
 
@@ -22,7 +23,7 @@ export async function getProducts(admin, options = {}) {
     let sortKey = null;
     let reverse = false;
 
-    if (sort) {
+    if (sort && sort.length > 0) {
       const [field, direction] = sort[0].split(' ');
       switch (field) {
         case 'title':
@@ -30,7 +31,7 @@ export async function getProducts(admin, options = {}) {
           reverse = direction === 'desc';
           break;
         case 'price':
-          sortKey = null;
+          sortKey = null; // Price sorting handled client-side
           reverse = direction === 'desc';
           break;
         case 'created':
@@ -45,11 +46,15 @@ export async function getProducts(admin, options = {}) {
           sortKey = 'CREATED_AT';
           reverse = true;
       }
+    } else {
+      // Default sort when no sort is specified
+      sortKey = 'CREATED_AT';
+      reverse = true; // newest first
     }
 
     const variables = {
       ...baseVariables,
-      query: buildProductsQuery(query) || undefined,
+      query: buildProductsQuery(query, filters) || undefined,
       sortKey: sortKey || undefined,
       reverse: reverse || undefined,
     };
@@ -59,6 +64,38 @@ export async function getProducts(admin, options = {}) {
     });
     const json = await response.json();
     
+    // Check for GraphQL errors (like invalid cursor)
+    if (json.errors && json.errors.length > 0) {
+      const cursorError = json.errors.find(error => 
+        error.message.includes('Invalid cursor') || 
+        error.message.includes('cursor for current pagination')
+      );
+      
+      if (cursorError) {
+        // Retry without cursors if there's a cursor error
+        const retryVariables = {
+          ...variables,
+          after: undefined,
+          before: undefined
+        };
+        
+        const retryResponse = await admin.graphql(GET_PRODUCTS_QUERY, {
+          variables: retryVariables
+        });
+        const retryJson = await retryResponse.json();
+        
+        if (!retryJson.errors) {
+          const products = retryJson.data.products;
+          return {
+            nodes: products.edges.map(edge => edge.node),
+            pageInfo: products.pageInfo,
+            edges: products.edges
+          };
+        }
+      }
+      throw new Error(json.errors[0].message);
+    }
+    
     const products = json.data.products;
     return {
       nodes: products.edges.map(edge => edge.node),
@@ -66,17 +103,17 @@ export async function getProducts(admin, options = {}) {
       edges: products.edges
     };
   } catch (error) {
-    console.error("error", error);
+    console.error("error fetching products", error);
     throw error;
   }
 }
 
 export async function getProductsCount(admin, options = {}) {
-  const { query = null } = options;
+  const { query = null, filters = {} } = options;
   try {
     const response = await admin.graphql(GET_PRODUCTS_COUNT_QUERY, {
       variables: {
-        query: buildProductsQuery(query) || undefined,
+        query: buildProductsQuery(query, filters) || undefined,
       },
     });
     const json = await response.json();

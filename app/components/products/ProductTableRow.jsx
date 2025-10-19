@@ -9,7 +9,7 @@ import {
 } from "@shopify/polaris";
 import { EditIcon, ImageIcon } from "@shopify/polaris-icons";
 import { formatPrice, formatDate } from "../../utils/format.util";
-import { truncateText } from "../../utils/product.util";
+import { truncateText, getProductStatusText, getProductStatusTone } from "../../utils/product.util";
 
 const ProductTableRow = ({ product, index, isSelected, onEdit }) => {
   const handleEdit = () => {
@@ -79,8 +79,8 @@ const ProductTableRow = ({ product, index, isSelected, onEdit }) => {
       </IndexTable.Cell>
 
       <IndexTable.Cell>
-        <Badge tone={product.status === "ACTIVE" ? "success" : "warning"}>
-          {product.status === "ACTIVE" ? "active" : "inactive"}
+        <Badge tone={getProductStatusTone(product.status)}>
+          {getProductStatusText(product.status)}
         </Badge>
       </IndexTable.Cell>
 
